@@ -40,16 +40,15 @@ def read_users():
 
 @app.route('/todos/user/<username>', methods=['POST'])
 def create_user(username):
-    body=request.get_json()
+    # body=request.get_json()
     try:
-        if body is None:
-            return "Body content is missing", 400
+        # if body is None:
+            # return "Body content is missing", 400
         new_user= User(user_name= username)
         new_user.add_user()
         return jsonify(new_user.serialize()), 200
     except:
         return "Couldn't create the user",409
-
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
@@ -68,6 +67,8 @@ def get_users(username):
 def create_tasks(username):
     body=request.get_json()
     try:
+        if body is None:
+            return "Body content is missing", 400
         new_task = Task(user_to_do= username ,label=body["label"],done=body["done"])
         new_task.add_task()
         return jsonify(new_task.serialize()), 200
@@ -87,7 +88,7 @@ def update_tasks(username):
     body=request.get_json()
     try:
         task = Task(user_to_do= username, id =body["id"] , label=body["label"],done=body["done"])
-        task.update_task(username, body["label"],body["done"])
+        task.update_task(username, body["label"],body["done"],body["id"])
         return jsonify(task.serialize()),202
     except:
         return "Couldn't update the task", 409
