@@ -30,26 +30,26 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/user', methods=['GET'])
-def handle_hello():
-
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
-    }
-
-    return jsonify(response_body), 200
+@app.route('/todos/user', methods=['GET'])
+def read_users():
+    try:
+        all_users = User.get_all_users()
+        return jsonify(all_users), 200
+    except:
+        return "Couldn't find the user",400
 
 @app.route('/todos/user/<username>', methods=['POST'])
 def create_user(username):
-    # body=request.get_json()
+    body=request.get_json()
+    try:
+        if body is None:
+            return "Body content is missing", 400
+        new_user= User(user_name= username)
+        new_user.add_user()
+        return jsonify(new_user.serialize()), 200
+    except:
+        return "Couldn't create the user",409
 
-    # if body is None:
-    #     return "Body content is missing", 400
-    new_user= User(user_name= username)
-    new_user.add_user()
-    # print(new_user)
-
-    return jsonify(new_user.serialize()), 200
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
@@ -58,17 +58,44 @@ if __name__ == '__main__':
 
 @app.route('/todos/user/<username>', methods=['GET'])
 def get_users(username):
-    users_nick = User.get_user(username)
-    print(users_nick)
-
-    return jsonify(users_nick), 200
+    try:
+        users_nick = User.get_user(username)
+        return jsonify(users_nick), 200
+    except:
+        return "Couldn't find the user",404
 
 @app.route('/todos/user/<username>/task', methods=['POST'])
 def create_tasks(username):
     body=request.get_json()
-  
-    new_task = Task(user_to_do= username ,label=body["label"],done=body["done"])
-    new_task.add_task()
+    try:
+        new_task = Task(user_to_do= username ,label=body["label"],done=body["done"])
+        new_task.add_task()
+        return jsonify(new_task.serialize()), 200
+    except:
+        return "Couldn't create the task", 409
 
-    return jsonify(new_task.serialize())
-    # print(new_user)
+@app.route('/todos/user/<username>/task', methods= ['GET'])
+def read_tasks(username):
+    try:
+        todos = Task.get_user_tasks(username)
+        return jsonify(todos),200
+    except:
+        return "Couldn't find the task", 404
+
+@app.route('/todos/user/<username>/task', methods=['PUT'])
+def update_tasks(username):
+    body=request.get_json()
+    try:
+        task = Task(user_to_do= username, id =body["id"] , label=body["label"],done=body["done"])
+        task.update_task(username, body["label"],body["done"])
+        return jsonify(task.serialize()),202
+    except:
+        return "Couldn't update the task", 409
+
+@app.route('/todos/user/<username>', methods=['DELETE'])
+def delete(username):
+    try:
+        deleted_user = User.delete_user(username)
+        return jsonify(deleted_user), 202
+    except:
+        return "Couldn't delete the task", 409
